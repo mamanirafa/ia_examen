@@ -20,13 +20,15 @@ window.NEXO_CONFIG = {
   hashDocente: "090429398e2b567f586baad94d8791521ee85ec04cea254dc29ea4cc2ec644b2", // código docente actual: ver guía docente
 
   // Cuántas preguntas de cada tipo se sortean por nodo (quick = rápidas, inter = interactivas)
+  // Versión 2 (nov. 2026): 41 desafíos y 62 puntos, pensada para unos 60 min de trabajo
   draw: {
-    ia:      { quick: 3, inter: 1 },
-    prompt:  { quick: 2, inter: 1, img: 1, write: 1, ai: 1 },
-    bigdata: { quick: 3, inter: 1 },
-    iot:     { quick: 3, inter: 1 },
-    trans:   { quick: 3, inter: 1 },
-    redes:   { quick: 3, inter: 1 }
+    ia:      { quick: 4, inter: 2 },
+    prompt:  { quick: 3, inter: 2, img: 1, write: 1, pick: 1, ai: 1 },  // pick = «Elegí el prompt correcto»
+    bigdata: { quick: 4, inter: 2 },
+    iot:     { quick: 4, inter: 2 },
+    trans:   { quick: 4, inter: 2 },
+    redes:   { quick: 4, inter: 2 },
+    just: 2  // «Justificá tu respuesta»: 2 preguntas, de nodos distintos
   },
 
   ias: [
@@ -34,5 +36,5 @@ window.NEXO_CONFIG = {
     { nombre: "ChatGPT", url: "https://chatgpt.com/" },
     { nombre: "Copilot", url: "https://copilot.microsoft.com/" }
   ],
-  storageKey: "nexo-examen-5b-v1"
+  storageKey: "nexo-examen-5b-v2"
 };

@@ -55,6 +55,7 @@ es: {
   noShortcut: "Ese atajo está desactivado durante el examen.", noPaste: "Pegar está desactivado: escribí con tus palabras.",
   awayTitle: "Saliste de la página", awayMsg: "Quedó registrado: llevás {n} de {m} salidas. Al llegar a {m}, el examen se bloquea.", awayBack: "Volver al examen",
   lockTitle: "Examen bloqueado", lockMsg: "Saliste de la página demasiadas veces. Llamá a tu docente para continuar.",
+  iJust: "Elegí la opción correcta.", iJust2: "Justificá tu elección con tus palabras (mínimo 10 palabras): ¿por qué es esa y no otra?", phJust: "Elegí esta opción porque…", iPick: "¿Cuál de estos prompts produjo este resultado? Fijate en cada detalle.", detJust: "Tu justificación menciona {n} idea(s) clave.",
   badge_ia: "Mente IA", badge_prompt: "Ingeniero/a de prompting", badge_bigdata: "Analista de datos", badge_iot: "Maker IoT", badge_trans: "Comunicador/a social", badge_redes: "Experto/a en redes", badge_etica: "Uso ético y responsable", badgeNew: "¡Nueva insignia!",
   mod_ia: "Concepto de IA", mod_prompt: "Prompting", mod_bigdata: "Big Data e IA", mod_iot: "Internet de las cosas", mod_trans: "Transmedia y prosumidores", mod_redes: "Redes PAN, LAN, MAN, WAN"
 },
@@ -113,6 +114,7 @@ fr: {
   noShortcut: "Ce raccourci est désactivé pendant l'examen.", noPaste: "Coller est désactivé : écris avec tes mots.",
   awayTitle: "Tu as quitté la page", awayMsg: "C'est enregistré : {n} sortie(s) sur {m}. À {m}, l'examen se bloque.", awayBack: "Revenir à l'examen",
   lockTitle: "Examen bloqué", lockMsg: "Tu as quitté la page trop de fois. Appelle ton professeur pour continuer.",
+  iJust: "Choisis la bonne option.", iJust2: "Justifie ton choix avec tes mots (minimum 10 mots) : pourquoi celle-ci et pas une autre ?", phJust: "J'ai choisi cette option parce que…", iPick: "Lequel de ces prompts a produit ce résultat ? Regarde chaque détail.", detJust: "Ta justification mentionne {n} idée(s) clé(s).",
   badge_ia: "Esprit IA", badge_prompt: "Ingénieur·e de prompts", badge_bigdata: "Analyste de données", badge_iot: "Maker IoT", badge_trans: "Communicant·e social·e", badge_redes: "Expert·e en réseaux", badge_etica: "Usage éthique et responsable", badgeNew: "Nouveau badge !",
   mod_ia: "Concept d'IA", mod_prompt: "Prompting", mod_bigdata: "Big Data et IA", mod_iot: "Internet des objets", mod_trans: "Transmédia et prosommateurs", mod_redes: "Réseaux PAN, LAN, MAN, WAN"
 },
@@ -171,6 +173,7 @@ en: {
   noShortcut: "That shortcut is disabled during the exam.", noPaste: "Pasting is disabled: write in your own words.",
   awayTitle: "You left the page", awayMsg: "It has been logged: {n} of {m} exits. At {m}, the exam locks.", awayBack: "Back to the exam",
   lockTitle: "Exam locked", lockMsg: "You left the page too many times. Call your teacher to continue.",
+  iJust: "Choose the correct option.", iJust2: "Justify your choice in your own words (at least 10 words): why this one and not another?", phJust: "I chose this option because…", iPick: "Which of these prompts produced this result? Check every detail.", detJust: "Your justification mentions {n} key idea(s).",
   badge_ia: "AI Mind", badge_prompt: "Prompt Engineer", badge_bigdata: "Data Analyst", badge_iot: "IoT Maker", badge_trans: "Social Communicator", badge_redes: "Network Expert", badge_etica: "Ethical & Responsible Use", badgeNew: "New badge!",
   mod_ia: "AI concept", mod_prompt: "Prompting", mod_bigdata: "Big Data & AI", mod_iot: "Internet of Things", mod_trans: "Transmedia & prosumers", mod_redes: "Networks PAN, LAN, MAN, WAN"
 }

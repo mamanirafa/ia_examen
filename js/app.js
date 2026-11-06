@@ -1,6 +1,6 @@
 /* =========================================================
    NEXO · Examen integrador de IA — Motor
-   Prof. Rafael Mamani · CIEU · 5.º B Ciencias Naturales
+   Prof. Rafael Mamani · CIEU · 5.º A Economía y 5.º B Ciencias Naturales
    ========================================================= */
 (function () {
   "use strict";
@@ -105,13 +105,19 @@
   function buildPlan(seed) {
     const r = rng(seed), items = DATA.es.ITEMS, mods = shuffle(MODS, r), plan = [];
     let ai = null;
+    // «Justificá tu respuesta»: se sortean C.draw.just preguntas, cada una de un nodo distinto
+    const justSel = [];
+    shuffle(items.filter(x => x.kind === "just"), r).forEach(x => { if (justSel.length < (C.draw.just || 0) && !justSel.some(j => j.mod === x.mod)) justSel.push(x); });
     mods.forEach(m => {
-      const d = C.draw[m]; let chosen = [];
+      const d = C.draw[m]; let chosen = [], imgSel = null;
       Object.keys(d).forEach(kind => {
-        const pool = items.filter(x => x.mod === m && x.kind === kind);
+        let pool = items.filter(x => x.mod === m && x.kind === kind);
+        if (kind === "pick" && imgSel) pool = pool.filter(x => x.img !== imgSel); // no repetir la imagen del prompt
         const pick = shuffle(pool, r).slice(0, d[kind]);
+        if (kind === "img" && pick[0]) imgSel = pick[0].img;
         if (kind === "ai") ai = pick[0] && pick[0].id; else chosen = chosen.concat(pick.map(p => p.id));
       });
+      justSel.filter(j => j.mod === m).forEach(j => chosen.push(j.id));
       shuffle(chosen, r).forEach(id => plan.push(id));
     });
     if (ai) plan.push(ai);
@@ -250,8 +256,9 @@
   }
 
   function langPicker() {
+    if (C.idiomas && C.idiomas.length < 2) return null;
     const sel = h("select", { class: "lang", "aria-label": "Idioma / Langue / Language", onchange: e => { S.lang = e.target.value; save(); render(); } },
-      [["es", "🌐 ES · Español"], ["fr", "🌐 FR · Français"], ["en", "🌐 EN · English"]].map(([v, l]) => h("option", { value: v, selected: S.lang === v }, l)));
+      [["es", "🌐 ES · Español"], ["fr", "🌐 FR · Français"], ["en", "🌐 EN · English"]].filter(([v]) => !C.idiomas || C.idiomas.includes(v)).map(([v, l]) => h("option", { value: v, selected: S.lang === v }, l)));
     return sel;
   }
 
@@ -413,8 +420,8 @@
   }
 
   function submit(id, answer, extra) {
-    const xe = itES(id);
-    let g = extra && extra.graded ? extra.graded : GRADE[xe.type](xe, answer);
+    const xe = itES(id), xg = it(id); // se corrige con el banco del idioma del estudiante (mismas respuestas)
+    let g = extra && extra.graded ? extra.graded : GRADE[xe.type](xg, answer);
     if (g.det && g.det.sens) { S.sensible = true; incident("datos_personales", id); }
     const secs = Math.round((Date.now() - (S.itemStart || Date.now())) / 1000);
     S.resp[id] = { a: answer, score: g.score, det: g.det || null, secs };
@@ -452,6 +459,7 @@
     if (d.hit != null) lines.push(t(x.type === "img" ? "detImg" : "detTxt", { h: d.hit, n: d.of }));
     if (d.style != null) lines.push(t(d.style ? "detStyleY" : "detStyleN"));
     if (d.topic != null) lines.push(t(d.topic ? "detTopicY" : "detTopicN"));
+    if (d.jhit != null) lines.push(t("detJust", { n: d.jhit }));
     if (d.sens) lines.push("⚠️ " + t("detSens"));
     return h("div", { class: "det" }, [h("div", { class: "ing-row" }, chips), lines.length ? h("ul", null, lines.map(l => h("li", null, l))) : null]);
   }
@@ -465,6 +473,9 @@
 
   RENDER.mcq = (x, card, done) => {
     qTitle(card, x, t("iMcq"));
+    mcqBody(x, card, done);
+  };
+  function mcqBody(x, card, done) {
     const order = shuffle(x.o.map((_, i) => i), ir(x.id)); let sel = null;
     const list = h("div", { class: "opts" });
     const btn = submitBtn();
@@ -475,6 +486,29 @@
     });
     btn.onclick = () => sel != null && done(sel);
     card.append(list, btn);
+  }
+  RENDER.pick = (x, card, done) => {
+    card.appendChild(h("h2", { class: "q" }, x.q));
+    if (x.img) card.appendChild(h("figure", { class: "pimg" }, h("img", { src: x.img, alt: t("imgAlt"), draggable: "false" })));
+    if (x.out) card.appendChild(h("div", { class: "ai-out" }, [h("div", { class: "ai-who" }, "🤖 " + t("aiAnswered")), h("pre", null, x.out)]));
+    card.appendChild(h("p", { class: "instr" }, t("iPick")));
+    mcqBody(x, card, done);
+  };
+  RENDER.just = (x, card, done) => {
+    qTitle(card, x, t("iJust"));
+    const order = shuffle(x.o.map((_, i) => i), ir(x.id)); let sel = null;
+    const list = h("div", { class: "opts" });
+    const P = promptArea(t("phJust"), false, 10);
+    const btn = submitBtn();
+    const chk = () => { btn.disabled = sel == null || words(P.ta.value) < 10; };
+    order.forEach((oi, k) => {
+      const b = h("button", { class: "opt", onclick: () => { sel = oi; $$(".opt", list).forEach(e => e.classList.remove("sel")); b.classList.add("sel"); chk(); } },
+        [h("span", { class: "let" }, "ABCDEF"[k]), h("span", null, x.o[oi])]);
+      list.appendChild(b);
+    });
+    P.ta.addEventListener("input", chk);
+    btn.onclick = () => done({ c: sel, t: P.ta.value.trim() });
+    card.append(list, h("p", { class: "instr" }, t("iJust2")), P.wrap, btn);
   };
 
   RENDER.tf = (x, card, done) => {
@@ -764,12 +798,18 @@
     match: (x, a) => ({ score: a.filter(([r, w]) => r === w).length / a.length }),
     cloze: (x, a) => ({ score: a.filter((w, i) => w === "a" + i || (w && w[0] === "a" && clozeWord(x, w) === clozeWord(x, "a" + i))).length / a.length }),
     order: (x, a) => { let ok = 0; for (let i = 0; i < a.length - 1; i++) if (a[i + 1] === a[i] + 1) ok++; const pos = a.filter((v, i) => v === i).length; return { score: (ok / (a.length - 1) + pos / a.length) / 2 }; },
-    img: (x, a) => gradePrompt(x, a), txt: (x, a) => gradePrompt(x, a), fix: (x, a) => gradePrompt(x, a)
+    img: (x, a) => gradePrompt(x, a), txt: (x, a) => gradePrompt(x, a), fix: (x, a) => gradePrompt(x, a),
+    pick: (x, a) => ({ score: a === x.a ? 1 : 0 }),
+    just: (x, a) => {
+      const n = norm(a.t), w = words(a.t), hit = x.kw.filter(k => hasAny(n, [k])).length;
+      const jq = w < 10 ? 0 : hit >= 2 ? 1 : hit === 1 ? 0.6 : 0.2;
+      return { score: a.c === x.a ? 0.5 + 0.5 * jq : 0.15 * jq, det: { jhit: hit, w, sens: sensitive(a.t) } };
+    }
   };
   function setScore(correct, a) { const c = new Set(correct); const hit = a.filter(v => c.has(v)).length, wrong = a.length - hit; return { score: Math.max(0, (hit - wrong) / correct.length) }; }
   function clozeWord(x, w) { const ans = x.t.split(/\[\[|\]\]/).filter((_, i) => i % 2 === 1); return w[0] === "a" ? ans[+w.slice(1)] : x.x[+w.slice(1)]; }
   const DESCR = {
-    mcq: (x, a) => x.o[a], tf: (x, a) => x.s.map((s, i) => (a[i] ? "V" : "F")).join(" · "),
+    mcq: (x, a) => x.o[a], pick: (x, a) => x.o[a], just: (x, a) => x.o[a.c] + "\nJUSTIFICACIÓN: " + a.t, tf: (x, a) => x.s.map((s, i) => (a[i] ? "V" : "F")).join(" · "),
     multi: (x, a) => a.map(i => x.o[i]).join(" | "), scene: (x, a) => a.map(i => x.o[i][1]).join(" | "), spot: (x, a) => a.map(i => x.o[i]).join(" | "),
     classify: (x, a) => a.map(([i, b]) => (x.it[i][1] === b ? "✓ " : "✗ ") + x.it[i][0] + " → " + x.bins[b]).join("\n"),
     match: (x, a) => a.map(([r, w]) => (r === w ? "✓ " : "✗ ") + x.p[r][0] + " → " + x.p[w][1]).join("\n"),
@@ -780,7 +820,8 @@
   };
   function EXPECT(x, g) {
     switch (x.type) {
-      case "mcq": return x.o[x.a];
+      case "mcq": case "pick": return x.o[x.a];
+      case "just": return x.o[x.a] + " · ideas clave esperadas: " + x.kw.join(", ") + " · detectadas: " + ((g.det && g.det.jhit) || 0) + " (revisión docente sugerida)";
       case "tf": return x.s.map(s => (s[1] ? "V" : "F")).join(" · ");
       case "multi": case "spot": return x.a.map(i => x.o[i]).join(" | ");
       case "scene": return x.a.map(i => x.o[i][1]).join(" | ");
