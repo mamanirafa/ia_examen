@@ -37,15 +37,28 @@
 
   async function pedir(accion) {
     const url = C.sheetUrl + "?accion=" + accion + "&curso=" + encodeURIComponent(C.curso) + "&clave=" + encodeURIComponent(clave) + "&_=" + Date.now();
-    const r = await fetch(url, { cache: "no-store" });
-    return r.json();
+    let r;
+    try { r = await fetch(url, { cache: "no-store" }); }
+    catch (e) { return { ok: false, error: "red" }; }
+    const txt = await r.text();
+    try { return JSON.parse(txt); }
+    catch (e) { return { ok: false, error: "viejo", detalle: txt.slice(0, 80) }; }
   }
   async function cargar(accion) {
     if (ocupado && !accion) return;
     ocupado = true;
     try {
       const j = await pedir(accion || "panel");
-      if (!j.ok) { clearInterval(timer); login(j.error === "clave" ? "La planilla rechazó el código. ¿Actualizaste el Apps Script?" : "Error: " + (j.error || "desconocido")); return; }
+      if (!j.ok) {
+        if (j.error === "red" && datos) { const st = document.getElementById("conn"); if (st) st.textContent = "⚠ Sin conexión con la planilla, reintentando…"; return; }
+        clearInterval(timer);
+        login({
+          clave: "La planilla rechazó el código docente. Revisá que el Apps Script tenga la lista CLAVES_DOCENTE actualizada.",
+          viejo: "La planilla respondió, pero con el Apps Script anterior (o sin autorizar). Pegá el código nuevo, guardá y en Implementar → Administrar implementaciones → ✏️ elegí «Nueva versión» y tocá Implementar (aceptá los permisos si los pide).",
+          red: "No se pudo conectar con la planilla. Revisá la conexión a internet y que la URL de sheetUrl en js/config.js sea la correcta."
+        }[j.error] || "Error: " + (j.error || "desconocido"));
+        return;
+      }
       datos = j; dibujar();
     } catch (e) {
       const st = document.getElementById("conn"); if (st) st.textContent = "⚠ Sin conexión con la planilla, reintentando…";
