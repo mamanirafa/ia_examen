@@ -448,7 +448,7 @@
     const head = h("div", { class: "q-head" }, [
       h("span", { class: "tag" }, MOD_EMOJI[x.mod] + " " + (x.type === "ai" ? t("finalChallenge") : t("mod_" + x.mod))),
       h("span", { class: "tag ghost" }, t("qOf", { i: S.idx + 1, n: S.plan.length })),
-      h("span", { class: "tag ghost" }, x.pts + " " + t("pts"))
+      h("span", { class: "tag ghost" }, x.pts + " " + (x.pts === 1 ? t("pt") : t("pts")))
     ]);
     const card = h("section", { class: "card q-card anim" }, [head]);
     stage.appendChild(card);
