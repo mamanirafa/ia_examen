@@ -74,7 +74,7 @@
 
   /* ---------- Registro (Google Sheets) ---------- */
   function send(tipo, data) {
-    const row = Object.assign({ tipo, sesion: S.sesion || "", fecha: new Date().toLocaleString("es-AR"), alumno: S.alumno ? S.alumno.apellido + ", " + S.alumno.nombre : "", curso: C.curso }, data);
+    const row = Object.assign({ tipo, sesion: S.sesion || "", fecha: new Date().toLocaleString("es-AR"), ts: Date.now(), alumno: S.alumno ? S.alumno.apellido + ", " + S.alumno.nombre : "", curso: C.curso }, data);
     const log = store.get(LK, []); log.push(row); store.set(LK, log);
     const q = store.get(QK, []); q.push(row); store.set(QK, q);
     flush();
@@ -327,8 +327,43 @@
     document.body.appendChild(a); a.click(); a.remove();
   }
 
+  /* ---------- Sala de espera: inicio sincronizado por el docente ---------- */
+  let salaInt = null;
+  function salaSync() { return !!C.inicioSincronizado; }
+  async function consultarSala() {
+    if (!C.sheetUrl) return false;
+    try {
+      const r = await fetch(C.sheetUrl + "?accion=estado&curso=" + encodeURIComponent(C.curso) + "&_=" + Date.now(), { cache: "no-store" });
+      const j = await r.json();
+      return !!(j && j.habilitado);
+    } catch (e) { return false; }
+  }
+  function habilitarLocal() {
+    if (S.habilitado) return;
+    S.habilitado = Date.now(); save();
+    clearInterval(salaInt);
+    const b = $("#goBtn"); if (b) { b.disabled = false; b.textContent = "🚀 " + t("goNow"); b.classList.add("pulse"); }
+    const w = $("#waitBox"); if (w) { w.className = "wait ok"; w.innerHTML = ""; w.appendChild(h("b", null, "✅ " + t("salaOpen"))); }
+    toast("✅ " + t("salaOpen"), "gold");
+  }
+  function iniciarSala() {
+    if (!salaSync() || S.habilitado) return;
+    if (!S.esperaEnviada) { S.esperaEnviada = true; save(); send("espera", { idioma: S.lang }); }
+    const tick = async () => { if (S.screen !== "brief") { clearInterval(salaInt); return; } if (await consultarSala()) habilitarLocal(); };
+    clearInterval(salaInt); salaInt = setInterval(tick, 4000); tick();
+  }
+
   function renderBrief() {
     const items = S.plan.length;
+    const espera = salaSync() && !S.habilitado;
+    const codeIn = h("input", { type: "password", class: "inp small", placeholder: t("teacherCode"), autocomplete: "off" });
+    const waitBox = !salaSync() ? null : h("div", { class: "wait " + (espera ? "" : "ok"), id: "waitBox" }, espera ? [
+      h("div", { class: "spinner", "aria-hidden": "true" }),
+      h("div", null, [h("b", null, t("salaWait")), h("p", null, t("salaWaitMsg"))]),
+      h("details", { class: "noai" }, [h("summary", null, t("salaManual")), codeIn, h("button", { class: "btn ghost", onclick: async () => {
+        if (await sha(codeIn.value) === C.hashDocente) { send("incidente", { evento: "inicio_manual", detalle: "habilitado con código en el equipo" }); habilitarLocal(); } else toast(t("badCode"), "warn");
+      } }, t("unlock"))])
+    ] : [h("b", null, "✅ " + t("salaOpen"))]);
     app.appendChild(h("main", { class: "brief" }, [
       h("h1", null, t("briefHi", { n: S.alumno.nombre })),
       h("p", { class: "sub" }, t("briefSub", { n: items, m: C.minutos })),
@@ -340,12 +375,15 @@
           h("div", { class: "badge-row" }, BADGES.map(b => h("div", { class: "badge on mini" }, [h("span", null, MOD_EMOJI[b]), h("small", null, t("badge_" + b))]))),
           h("p", { class: "note" }, t("certMsg", { n: C.aprobacion }))])
       ]),
-      h("button", { class: "btn big", onclick: () => {
-        S.inicio = Date.now(); S.itemStart = Date.now(); S.screen = "exam"; save();
-        send("inicio", { idioma: S.lang, preguntas: S.plan.join(" "), orden_nodos: S.mods.join(" > ") });
+      waitBox,
+      h("button", { class: "btn big" + (salaSync() && !espera ? " pulse" : ""), id: "goBtn", disabled: espera, onclick: () => {
+        if (salaSync() && !S.habilitado) return;
+        S.inicio = salaSync() ? Math.min(Date.now(), S.habilitado) : Date.now(); S.itemStart = Date.now(); S.screen = "exam"; save();
+        send("inicio", { idioma: S.lang, preguntas: S.plan.join(" "), orden_nodos: S.mods.join(" > "), total: S.plan.length });
         goFull(); render();
-      } }, "🚀 " + t("go"))
+      } }, espera ? "⏳ " + t("salaBtnWait") : "🚀 " + (salaSync() ? t("goNow") : t("go")))
     ]));
+    if (espera) iniciarSala();
   }
 
   /* ---------- Examen ---------- */

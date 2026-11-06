@@ -14,6 +14,9 @@ window.NEXO_CONFIG = {
   // Dejala vacía "" para probar sin planilla.
   sheetUrl: "https://script.google.com/macros/s/AKfycbwXvO-8FdK8R76DA1aNn1ljRAlkEGE6uw_nOPPod0_eSjPPj2Roxx0Psj3niLU72bXu/exec",
 
+  // Sala de espera: los estudiantes ingresan y esperan hasta que el docente habilite el inicio desde panel.html
+  inicioSincronizado: true,
+
   // Los códigos NO se guardan en texto: se guarda su huella (SHA-256).
   // Para cambiarlos, abrí docente.html, escribí el código nuevo y copiá la huella acá.
   hashSala: "c36c9245626c85f025e1e41f84661fcbed886944b3dc62bb37206ab5abf33dc4",    // código de sala actual: ver guía docente
